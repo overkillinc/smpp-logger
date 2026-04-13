@@ -93,7 +93,7 @@ nc -zv <node-ip-or-hostname> 30075
 timeout 2 bash -c "</dev/tcp/<node-ip-or-hostname>/30075" && echo OK || echo FAIL
 ```
 
-Integration tests (example): the repository includes integration tests that can exercise the live k3s-deployed service. Set the target host for tests and run the tests as normal (example):
+Integration tests (example): the repository includes integration tests that can exercise the live k3s-deployed service. A smoke test is provided in `integration/k8s_integration_test.go` that performs a TCP connect to the NodePort and verifies the socket accepts data. Set the target host for tests and run the tests as normal (example):
 
 ```bash
 export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
