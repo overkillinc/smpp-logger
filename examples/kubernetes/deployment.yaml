@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smpp-logger-auth
+type: Opaque
+stringData:
+  system-id: smpp-logger
+  password: smpp-logger
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smpp-logger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smpp-logger
+  template:
+    metadata:
+      labels:
+        app: smpp-logger
+    spec:
+      containers:
+        - name: smpp-logger
+          image: ghcr.io/overkillinc/smpp-logger:latest
+          ports:
+            - containerPort: 2775
+              name: smpp
+          env:
+            - name: SMPP_LOGGER_SYSTEM_ID
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-auth
+                  key: system-id
+            - name: SMPP_LOGGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-auth
+                  key: password
+            - name: SMPP_LOGGER_LISTEN_ADDR
+              value: :2775
+            - name: SMPP_LOGGER_LOG_FORMAT
+              value: text
+          readinessProbe:
+            tcpSocket:
+              port: smpp
+          livenessProbe:
+            tcpSocket:
+              port: smpp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smpp-logger
+spec:
+  selector:
+    app: smpp-logger
+  ports:
+    - name: smpp
+      port: 2775
+      targetPort: smpp

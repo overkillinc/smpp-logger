@@ -1,0 +1,7 @@
+.git
+.github
+.copilot
+**/*_test.go
+plan.md
+README.md
+examples
