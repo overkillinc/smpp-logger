@@ -74,6 +74,32 @@ docker run --rm -p 2775:2775 \
 
 An example manifest lives at [`examples/kubernetes/deployment.yaml`](examples/kubernetes/deployment.yaml). It uses TCP socket probes on the SMPP port, which is enough for this single-purpose service.
 
+Apply directly from GitHub (recommended for quick deploys):
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/deployment.yaml
+# ensure the imagePullSecret exists in the namespace (uses GHCR token):
+kubectl create secret docker-registry ghcr-creds --docker-server=ghcr.io --docker-username=<GH_USER> --docker-password=<PERSONAL_ACCESS_TOKEN> -n smpp-logger --dry-run=client -o yaml | kubectl apply -f -
+```
+
+The example exposes the SMPP port via a NodePort (30075) so the service can be reached from the host network. If a wildcard DNS like `*.de.it-union.net` is delegated to the server, the instance will be available at `<your-host>.de.it-union.net:30075`.
+
+Quick smoke test (from this host or a machine that can reach the node):
+
+```bash
+# check TCP connectivity to nodePort
+nc -zv <node-ip-or-hostname> 30075
+# or
+timeout 2 bash -c "</dev/tcp/<node-ip-or-hostname>/30075" && echo OK || echo FAIL
+```
+
+Integration tests (example): the repository includes integration tests that can exercise the live k3s-deployed service. Set the target host for tests and run the tests as normal (example):
+
+```bash
+export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
+go test ./... -run Integration -v
+```
+
 ## Release flow
 
 Push a semantic version tag such as `v1.0.0` to trigger:
