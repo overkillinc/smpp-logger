@@ -8,8 +8,7 @@ ARG TARGETARCH=amd64
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd ./cmd
-COPY internal ./internal
+COPY . .
 
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/smpp-logger ./cmd/smpp-logger
 
