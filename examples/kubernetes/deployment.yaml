@@ -34,6 +34,8 @@ spec:
           ports:
             - containerPort: 2775
               name: smpp
+            - containerPort: 8080
+              name: http
           env:
             - name: SMPP_LOGGER_SYSTEM_ID
               valueFrom:
@@ -49,6 +51,12 @@ spec:
               value: :2775
             - name: SMPP_LOGGER_LOG_FORMAT
               value: text
+            - name: SMPP_LOGGER_UI_ADDR
+              value: :8080
+            - name: SMPP_LOGGER_UI_USER
+              value: admin
+            - name: SMPP_LOGGER_UI_PASS
+              value: admin
           readinessProbe:
             tcpSocket:
               port: smpp
@@ -72,3 +80,7 @@ spec:
       port: 2775
       targetPort: smpp
       nodePort: 30075
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 31513
