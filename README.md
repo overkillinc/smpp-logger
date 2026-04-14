@@ -45,7 +45,7 @@ All configuration is environment-variable based. Recommended variables:
 
 ## Kubernetes
 
-A sanitized example manifest lives at `examples/kubernetes/deployment.yaml`. **Do not commit real credentials into the manifest** — create Kubernetes secrets locally and reference them from the deployment. Example:
+An example manifest lives at `examples/kubernetes/deployment.yaml`. For quick testing, that file includes a dummy secret with default credentials (system-id/password = smpp-logger/smpp-logger). These are provided for convenience and are intended for local testing only — DO NOT use them in production. To use secure credentials, create Kubernetes secrets locally and reference them from the deployment. Example:
 
 ```bash
 kubectl -n smpp-logger create secret generic smpp-logger-auth \
