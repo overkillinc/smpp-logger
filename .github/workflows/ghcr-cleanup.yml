@@ -1,0 +1,58 @@
+name: GHCR cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'If true, do not delete; just report (default true)'
+        required: false
+        default: 'true'
+      patterns:
+        description: 'Comma-separated tag patterns to match (substring). Default: staging,main-'
+        required: false
+        default: 'staging,main-'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cleanup GHCR package versions
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const org = 'overkillinc'
+            const package_type = 'container'
+            const package_name = 'smpp-logger'
+            const core = require('@actions/core')
+            const dryRun = (core.getInput('dry_run') || 'true') === 'true'
+            const patterns = (core.getInput('patterns') || 'staging,main-').split(',').map(s => s.trim()).filter(Boolean)
+            core.info(`dryRun=${dryRun}, patterns=${patterns}`)
+            // list package versions for org-owned package
+            const list = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+              org,
+              package_type,
+              package_name,
+              per_page: 100
+            })
+            const versions = list.data || []
+            core.info(`found ${versions.length} versions`)
+            for (const v of versions) {
+              const tags = (v.metadata && v.metadata.container && v.metadata.container.tags) || []
+              for (const t of tags) {
+                if (patterns.some(p => t.includes(p))) {
+                  core.info(`matched version id=${v.id} tag=${t} created_at=${v.created_at}`)
+                  if (!dryRun) {
+                    await github.rest.packages.deletePackageVersionForOrg({ org, package_type, package_name, package_version_id: v.id })
+                    core.info(`deleted version ${v.id}`)
+                  }
+                  break
+                }
+              }
+            }
