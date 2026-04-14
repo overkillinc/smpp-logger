@@ -29,6 +29,18 @@ docker run --rm -p 2775:2775 \
   ghcr.io/overkillinc/smpp-logger:latest
 ```
 
+Kubernetes (one-line apply)
+
+For a quick cluster install, apply the single-file example manifest in this repository. This will create a namespace, dummy secrets (for testing), the Deployment, Services, and an Ingress configured for Traefik and cert-manager:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/smpp-logger-deploy.yaml
+```
+
+Replace the dummy credentials and DOMAIN in the manifest before exposing to public networks, or create Kubernetes secrets separately and use a pinned image tag for production.
+
+
+
 
 ## Configuration
 
@@ -45,15 +57,32 @@ All configuration is environment-variable based. Recommended variables:
 
 ## Kubernetes
 
-An example manifest lives at `examples/kubernetes/deployment.yaml`. For quick testing, that file includes a dummy secret with default credentials (system-id/password = smpp-logger/smpp-logger). These are provided for convenience and are intended for local testing only — DO NOT use them in production. To use secure credentials, create Kubernetes secrets locally and reference them from the deployment. Example:
+A single-file example manifest is available at `examples/kubernetes/smpp-logger-deploy.yaml` and includes Namespace, test-only dummy secrets, the Deployment, Services (NodePort), and an Ingress configured for Traefik + cert-manager. See Quickstart for the one-line `kubectl apply` example.
+
+Warning: the single-file manifest contains dummy credentials and a placeholder domain. Replace the credentials and DOMAIN, or create Kubernetes secrets before applying, especially for production use.
+
+To create Kubernetes secrets separately (recommended for production):
 
 ```bash
 kubectl -n smpp-logger create secret generic smpp-logger-auth \
   --from-literal=system-id=<SYSTEM_ID> \
   --from-literal=password=<PASSWORD>
+
+kubectl -n smpp-logger create secret generic smpp-logger-ui-credentials \
+  --from-literal=SMPP_LOGGER_UI_USER=<USER> \
+  --from-literal=SMPP_LOGGER_UI_PASS=<PASS>
 ```
 
-Apply the example manifest once you have created the necessary secrets and (if required) an image pull secret for GHCR.
+If your environment requires authenticated pulls from GHCR, create an image pull secret and reference it in the Deployment:
+
+```bash
+kubectl -n smpp-logger create secret docker-registry ghcr-creds \
+  --docker-server=ghcr.io --docker-username=<USER> --docker-password=<PAT> --docker-email=<EMAIL>
+```
+
+Apply the single-file manifest after replacing values or creating secrets as appropriate.
+
+
 
 For a one-line deploy (quick testing), use the single-file manifest hosted in this repository:
 
