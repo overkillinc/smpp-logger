@@ -27,6 +27,8 @@ jobs:
           cache: true
 
       - name: Run tests
+        env:
+          RUN_INTEGRATION: "false"
         run: go test ./...
 
       - name: Set up QEMU
