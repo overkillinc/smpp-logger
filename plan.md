@@ -52,3 +52,5 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Added a recommended pre-commit hook (.githooks/pre-commit) that runs gofmt and go test to catch issues locally. Install it with: scripts/install-git-hooks.sh
 
 - Integration tests now require RUN_INTEGRATION=true to run against localhost, or SMPP_TEST_TARGET_HOST to point at a remote target. This prevents CI from skipping real local failures while avoiding CI breaks when staging is unavailable.
+
+- Added .github/workflows/ghcr-cleanup.yml manual workflow to list and delete GHCR container package versions (dry-run default). Run via Actions -> GHCR cleanup and set dry_run=false to perform deletes.
