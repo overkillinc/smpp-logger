@@ -8,10 +8,10 @@ kind: Secret
 metadata:
   name: smpp-logger-auth
   namespace: smpp-logger
-type: Opaque
-stringData:
-  system-id: smpp-logger
-  password: smpp-logger
+# Create this secret locally with your own credentials instead of committing them here.
+# Example (run locally):
+# kubectl -n smpp-logger create secret generic smpp-logger-auth --from-literal=system-id=<SYSTEM_ID> --from-literal=password=<PASSWORD>
+# Do not commit real credentials to the repository.
 ---
 apiVersion: apps/v1
 kind: Deployment

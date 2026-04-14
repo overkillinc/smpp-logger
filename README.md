@@ -1,139 +1,99 @@
 # smpp-logger
 
-`smpp-logger` is a small SMPP 3.4 debugging server for Kubernetes and container environments. It accepts a single credential pair, acknowledges incoming traffic, emits compact logs for message submissions, and returns immediate synthetic success delivery receipts for accepted `submit_sm` requests.
+[![CI](https://github.com/overkillinc/smpp-logger/actions/workflows/ci.yml/badge.svg)](https://github.com/overkillinc/smpp-logger/actions/workflows/ci.yml)
+[![Release Workflow](https://github.com/overkillinc/smpp-logger/actions/workflows/release.yml/badge.svg)](https://github.com/overkillinc/smpp-logger/actions/workflows/release.yml)
 
-## Supported flow
+`smpp-logger` is a small SMPP 3.4 debugging server for Kubernetes and container environments. It accepts a single credential pair, acknowledges incoming traffic, emits compact logs for message submissions, and returns synthetic delivery receipts for accepted `submit_sm` requests.
 
-- `bind_receiver`
-- `bind_transmitter`
-- `bind_transceiver`
-- `enquire_link`
-- `submit_sm`
-- synthetic `deliver_sm` delivery receipts for `bind_transceiver` sessions
-- `unbind`
 
-`bind_transmitter` sessions can submit messages but do not receive `deliver_sm` receipts, which keeps the behavior aligned with SMPP bind semantics.
+## Quickstart
 
-## Configuration
-
-All configuration is environment-variable based.
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `SMPP_LOGGER_LISTEN_ADDR` | `:2775` | TCP listen address for the SMPP server |
-| `SMPP_LOGGER_SYSTEM_ID` | `smpp-logger` | Allowed SMPP login |
-| `SMPP_LOGGER_PASSWORD` | `smpp-logger` | Allowed SMPP password |
-| `SMPP_LOGGER_LOG_FORMAT` | `text` | `text` or `json` |
-| `SMPP_LOGGER_SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown budget |
-
-## Local development
-
-Run the server directly:
+Run locally (development):
 
 ```bash
 go run ./cmd/smpp-logger
 ```
 
-Run the tests:
+Build container (optional):
 
 ```bash
-go test ./...
+docker build -t ghcr.io/overkillinc/smpp-logger:local .
 ```
 
-Default startup listens on `:2775` with the credential pair `smpp-logger` / `smpp-logger`.
-
-## Logs
-
-Text mode is compact by default:
-
-```text
-event=submit login="smpp-logger" sender="alice" destination="15551234567" text="hello world" message_id="msg-0000000001" client="10.0.0.15:51982" seq=3
-event=receipt login="smpp-logger" sender="15551234567" destination="alice" text="hello world" message_id="msg-0000000001" client="10.0.0.15:51982" seq=1
-```
-
-Set `SMPP_LOGGER_LOG_FORMAT=json` for structured container logs.
-
-## Container usage
-
-Build the image locally:
-
-```bash
-docker build -t smpp-logger:local .
-```
-
-Run it:
+Run container (example):
 
 ```bash
 docker run --rm -p 2775:2775 \
-  -e SMPP_LOGGER_SYSTEM_ID=client \
-  -e SMPP_LOGGER_PASSWORD=secret \
+  -e SMPP_LOGGER_SYSTEM_ID=<SYSTEM_ID> \
+  -e SMPP_LOGGER_PASSWORD=<PASSWORD> \
   ghcr.io/overkillinc/smpp-logger:latest
 ```
 
+
+## Configuration
+
+All configuration is environment-variable based. Recommended variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `SMPP_LOGGER_LISTEN_ADDR` | `:2775` | TCP listen address for the SMPP server |
+| `SMPP_LOGGER_SYSTEM_ID` | `smpp-logger` | Allowed SMPP login (set via secret) |
+| `SMPP_LOGGER_PASSWORD` | *required* | Allowed SMPP password (set via secret) |
+| `SMPP_LOGGER_LOG_FORMAT` | `text` | `text` or `json` |
+| `SMPP_LOGGER_SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown budget |
+
+
 ## Kubernetes
 
-An example manifest lives at [`examples/kubernetes/deployment.yaml`](examples/kubernetes/deployment.yaml). It uses TCP socket probes on the SMPP port, which is enough for this single-purpose service.
-
-Apply directly from GitHub (recommended for quick deploys):
+A sanitized example manifest lives at `examples/kubernetes/deployment.yaml`. **Do not commit real credentials into the manifest** — create Kubernetes secrets locally and reference them from the deployment. Example:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/deployment.yaml
-# ensure the imagePullSecret exists in the namespace (uses GHCR token):
-kubectl create secret docker-registry ghcr-creds --docker-server=ghcr.io --docker-username=<GH_USER> --docker-password=<PERSONAL_ACCESS_TOKEN> -n smpp-logger --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n smpp-logger create secret generic smpp-logger-auth \
+  --from-literal=system-id=<SYSTEM_ID> \
+  --from-literal=password=<PASSWORD>
 ```
 
-The example exposes the SMPP port via a NodePort (30075) so the service can be reached from the host network. If a wildcard DNS like `*.de.it-union.net` is delegated to the server, the instance will be available at `<your-host>.de.it-union.net:30075`.
+Apply the example manifest once you have created the necessary secrets and (if required) an image pull secret for GHCR.
 
-Quick smoke test (from this host or a machine that can reach the node):
 
-```bash
-# check TCP connectivity to nodePort
-nc -zv <node-ip-or-hostname> 30075
-# or
-timeout 2 bash -c "</dev/tcp/<node-ip-or-hostname>/30075" && echo OK || echo FAIL
-```
+## HTTP UI
 
-Warning: the built-in HTTP UI listens on port 8080 by default and uses basic auth with default credentials (admin/admin). This HTTP endpoint is NOT encrypted — do not expose it on untrusted networks. If the logs contain sensitive information, enable TLS (HTTPS) and stronger authentication before use, and replace the default username/password immediately.
+The project includes a minimal HTTP UI protected by Basic Auth. The UI supports an input filter that queries the `/logs?q=` endpoint (case-insensitive substring match). For secure use:
 
-Integration tests (example): the repository includes integration tests that can exercise the live k3s-deployed service. A smoke test is provided in `integration/k8s_integration_test.go` that performs a TCP connect to the NodePort and verifies the socket accepts data. Set the target host for tests and run the tests as normal (example):
+- Do not expose the built-in HTTP UI directly to the public internet without TLS.
+- Use Kubernetes Ingress + cert-manager or an external TLS terminator.
+- Store UI credentials in k8s secrets and mount via env vars.
 
-```bash
-export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
-go test ./... -run Integration -v
-```
 
-## Kubernetes: apply from GitHub and run integration tests
+## Testing
 
-Apply the example manifest directly from the GitHub raw URL and run the included integration tests against the NodePort exposed by the example manifest.
+Run unit and integration tests locally. Integration tests that exercise a running cluster are opt-in and require:
+
+- `SMPP_TEST_TARGET_HOST` set to the target (or)
+- `RUN_INTEGRATION=true` to test against localhost NodePort
 
 Example:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/deployment.yaml
-kubectl -n smpp-logger rollout status deployment/smpp-logger --timeout=120s
-# create image pull secret if GHCR is private:
-kubectl -n smpp-logger create secret docker-registry ghcr-creds --docker-server=ghcr.io --docker-username=<GH_USER> --docker-password=<PERSONAL_ACCESS_TOKEN> -o yaml | kubectl apply -f -
-
-# run integration tests targeting the NodePort (replace <node-ip> appropriately):
 export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
 go test ./integration -v
 ```
 
-Note: if GHCR images are not public, either create `ghcr-creds` as shown above or build and load the image into your k3s cluster locally (e.g., `docker build` + `ctr images import` / `k3s ctr images import`).
 
-## Ingress and HTTP UI
+## Contributing
 
-If you've applied the example ingress and cert-manager is active, the service will be available at `https://smpp-logger.de.it-union.net` (DNS must point to the cluster node). The example uses Traefik + cert-manager (HTTP-01) and will automatically request a TLS certificate. Access the UI with the default credentials `admin` / `admin`.
+Contributions are welcome. See CONTRIBUTING.md and CODE_OF_CONDUCT.md for guidance.
 
-If the built container image with the UI is not yet deployed, a temporary HTTP backend may be used by the cluster to satisfy the ingress and TLS; replace it by deploying the image that contains the UI and ensure the pod listens on port `8080`.
 
-## Release flow
+## License
 
-Push a semantic version tag such as `v1.0.0` to trigger:
+This project is released under the MIT License. See LICENSE for details.
 
-1. Go test execution
-2. Multi-arch image publishing to `ghcr.io/<owner>/smpp-logger`
-3. GitHub Release creation with the image digest
+
+## Security
+
+Do not commit secrets or credentials to this repository. If you discover a security issue, open a confidential issue or contact maintainers.
+
 
 # Git hooks
-Run scripts/install-git-hooks.sh to enable the project's pre-commit hook (requires Git >=2.9).
+Run `scripts/install-git-hooks.sh` to enable the project's pre-commit hook (requires Git >=2.9).
