@@ -27,3 +27,9 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Verified endpoints and performed in-cluster curl to service; tested node-level Host-header curl before and after service creation.
 - Patched ingress to set spec.ingressClassName: traefik to ensure Traefik picks up routes if needed.
 
+
+# Routing fixes applied
+- Created smpp-logger-ui Service in smpp-logger namespace so the production ingress has a valid backend.
+- Confirmed staging ingress now routes to the smpp-logger service in smpp-logger-staging and serves the UI (401 when unauthenticated).
+- Verified original host responds and accepts basic auth.
+
