@@ -1,0 +1,140 @@
+# Single-file deployment for quick one-line install
+# Usage: kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/smpp-logger-deploy.yaml
+# Replace the dummy credentials and DOMAIN before exposing in production.
+# For reproducible deployments, replace the image with a specific tag (e.g., ghcr.io/overkillinc/smpp-logger:v1.0.10)
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smpp-logger
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smpp-logger-auth
+  namespace: smpp-logger
+type: Opaque
+stringData:
+  # Dummy credentials for quick testing only - replace before using in production
+  system-id: smpp-logger
+  password: smpp-logger
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smpp-logger-ui-credentials
+  namespace: smpp-logger
+type: Opaque
+stringData:
+  # Dummy UI credentials - replace before using in production
+  SMPP_LOGGER_UI_USER: admin
+  SMPP_LOGGER_UI_PASS: admin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smpp-logger
+  namespace: smpp-logger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smpp-logger
+  template:
+    metadata:
+      labels:
+        app: smpp-logger
+    spec:
+      containers:
+        - name: smpp-logger
+          image: ghcr.io/overkillinc/smpp-logger:latest
+          ports:
+            - containerPort: 2775
+              name: smpp
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SMPP_LOGGER_SYSTEM_ID
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-auth
+                  key: system-id
+            - name: SMPP_LOGGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-auth
+                  key: password
+            - name: SMPP_LOGGER_LISTEN_ADDR
+              value: :2775
+            - name: SMPP_LOGGER_LOG_FORMAT
+              value: text
+            - name: SMPP_LOGGER_UI_ADDR
+              value: :8080
+            - name: SMPP_LOGGER_UI_USER
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-ui-credentials
+                  key: SMPP_LOGGER_UI_USER
+            - name: SMPP_LOGGER_UI_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-ui-credentials
+                  key: SMPP_LOGGER_UI_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smpp-logger
+  namespace: smpp-logger
+spec:
+  type: NodePort
+  selector:
+    app: smpp-logger
+  ports:
+    - name: smpp
+      port: 2775
+      targetPort: smpp
+      nodePort: 30075
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 31513
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smpp-logger-ui
+  namespace: smpp-logger
+spec:
+  selector:
+    app: smpp-logger
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+# Ingress - replace DOMAIN with your host
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smpp-logger-ingress
+  namespace: smpp-logger
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - smpp-logger.example.com
+      secretName: smpp-logger-tls
+  rules:
+    - host: smpp-logger.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: smpp-logger-ui
+                port:
+                  number: 8080
