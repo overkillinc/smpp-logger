@@ -56,8 +56,8 @@ func New(w io.Writer, format string) (*Logger, error) {
 		}, nil
 	case JSONFormat:
 		return &Logger{
-			format:     JSONFormat,
-			json:       slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{
+			format: JSONFormat,
+			json: slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{
 				Level: slog.LevelInfo,
 			})),
 			historyMax: defaultHistory,

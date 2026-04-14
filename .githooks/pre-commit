@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+# Run gofmt and tests before allowing commit
+gofmt -w .
+if ! go test ./... ; then
+  echo "go tests failed; aborting commit"
+  exit 1
+fi

@@ -16,9 +16,9 @@ const (
 	defaultShutdownTimeout = 10 * time.Second
 
 	// HTTP UI defaults
-	defaultUIAddr  = ":8080"
-	defaultUIUser  = "admin"
-	defaultUIPass  = "admin"
+	defaultUIAddr = ":8080"
+	defaultUIUser = "admin"
+	defaultUIPass = "admin"
 )
 
 type Config struct {

@@ -44,8 +44,8 @@ func main() {
 	}
 
 	// shutdown http server gracefully
-t_ := context.Background()
-_ = httpSrv.Shutdown(t_)
+	t_ := context.Background()
+	_ = httpSrv.Shutdown(t_)
 }
 
 func fatal(err error) {

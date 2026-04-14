@@ -46,3 +46,9 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Integration tests were executed against the staging namespace using a local port-forward to svc/smpp-logger (127.0.0.1:50076 -> 2775).
 - Tests passed: TestIntegration_SmppFlow succeeded when run against staging.
 - Policy: All integration tests touching prod must use only published GHCR images; staging is the default environment for live testing.
+
+# Recent changes
+- Integration test TestIntegration_SmppFlow now skips if the configured target is unreachable to avoid failing CI jobs when staging isn't accessible.
+- Added a recommended pre-commit hook (.githooks/pre-commit) that runs gofmt and go test to catch issues locally. Install it with: scripts/install-git-hooks.sh
+
+- Integration tests now require RUN_INTEGRATION=true to run against localhost, or SMPP_TEST_TARGET_HOST to point at a remote target. This prevents CI from skipping real local failures while avoiding CI breaks when staging is unavailable.

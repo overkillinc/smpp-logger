@@ -102,31 +102,6 @@ export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
 go test ./... -run Integration -v
 ```
 
-## Kubernetes: apply from GitHub and run integration tests
-
-Apply the example manifest directly from the GitHub raw URL and run the included integration tests against the NodePort exposed by the example manifest.
-
-Example:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/deployment.yaml
-kubectl -n smpp-logger rollout status deployment/smpp-logger --timeout=120s
-# create image pull secret if GHCR is private:
-kubectl -n smpp-logger create secret docker-registry ghcr-creds --docker-server=ghcr.io --docker-username=<GH_USER> --docker-password=<PERSONAL_ACCESS_TOKEN> -o yaml | kubectl apply -f -
-
-# run integration tests targeting the NodePort (replace <node-ip> appropriately):
-export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
-go test ./integration -v
-```
-
-Note: if GHCR images are not public, either create `ghcr-creds` as shown above or build and load the image into your k3s cluster locally (e.g., `docker build` + `ctr images import` / `k3s ctr images import`).
-
-## Ingress and HTTP UI
-
-If you've applied the example ingress and cert-manager is active, the service will be available at `https://smpp-logger.de.it-union.net` (DNS must point to the cluster node). The example uses Traefik + cert-manager (HTTP-01) and will automatically request a TLS certificate. Access the UI with the default credentials `admin` / `admin`.
-
-If the built container image with the UI is not yet deployed, a temporary HTTP backend may be used by the cluster to satisfy the ingress and TLS; replace it by deploying the image that contains the UI and ensure the pod listens on port `8080`.
-
 ## Release flow
 
 Push a semantic version tag such as `v1.0.0` to trigger:
@@ -134,6 +109,3 @@ Push a semantic version tag such as `v1.0.0` to trigger:
 1. Go test execution
 2. Multi-arch image publishing to `ghcr.io/<owner>/smpp-logger`
 3. GitHub Release creation with the image digest
-
-# Git hooks
-Run scripts/install-git-hooks.sh to enable the project's pre-commit hook (requires Git >=2.9).
