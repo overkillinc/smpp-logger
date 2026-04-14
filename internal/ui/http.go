@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/overkillinc/smpp-logger/internal/logging"
 )
@@ -14,27 +15,57 @@ import (
 func NewHandler(logger *logging.Logger, user, pass string) http.Handler {
 	m := http.NewServeMux()
 	m.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// simple HTML page that fetches /logs
-		// authentication already enforced by middleware in this implementation
+		// simple HTML page that fetches /logs and supports auto-refresh + filtering
 		tmpl := `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <title>smpp-logger UI</title>
-<style>body{font-family:sans-serif;margin:1rem} pre{background:#111;color:#eee;padding:1rem}</style>
+<style>body{font-family:sans-serif;margin:1rem} input[type=text]{width:40%;padding:0.25rem} pre{background:#111;color:#eee;padding:1rem;white-space:pre-wrap;word-break:break-word}</style>
 </head>
 <body>
 <h1>smpp-logger recent logs</h1>
-<p>Showing last <span id="mins">5</span> minutes. <button onclick="dec()">-</button> <button onclick="inc()">+</button> <button onclick="refresh()">Refresh</button></p>
+<div>
+  <label>Minutes: <span id="mins">5</span></label>
+  <button onclick="dec()">-</button>
+  <button onclick="inc()">+</button>
+  <button onclick="refresh()">Refresh</button>
+</div>
+<div style="margin-top:0.5rem">
+  <label>Filter: <input id="filter" type="text" placeholder="substring to filter (case-insensitive)" /></label>
+  <button onclick="applyFilter()">Apply</button>
+  <label style="margin-left:1rem"><input id="autorefresh" type="checkbox" checked /> Auto-refresh</label>
+</div>
 <pre id="logs">Loading...</pre>
 <script>
-let mins=5
-function render(text){document.getElementById('logs').textContent = text}
-function fetchLogs(){fetch('/logs?minutes='+mins,{credentials: 'same-origin'}).then(r=>r.text()).then(render).catch(e=>render('fetch error: '+e))}
-function inc(){mins+=1;document.getElementById('mins').textContent=mins;fetchLogs()}
-function dec(){if(mins>1){mins-=1;document.getElementById('mins').textContent=mins;fetchLogs()}}
-function refresh(){fetchLogs()}
-fetchLogs();setInterval(fetchLogs,15000)
+let mins = 5;
+let filter = '';
+let timer = null;
+function render(text){ document.getElementById('logs').textContent = text }
+function fetchLogs(){
+  let url = '/logs?minutes=' + mins;
+  if (filter && filter.trim() !== '') {
+    url += '&q=' + encodeURIComponent(filter.trim());
+  }
+  fetch(url, {credentials: 'include'})
+    .then(r => r.text())
+    .then(render)
+    .catch(e => render('fetch error: ' + e))
+}
+function inc(){ mins += 1; document.getElementById('mins').textContent = mins; fetchLogs() }
+function dec(){ if (mins > 1) { mins -= 1; document.getElementById('mins').textContent = mins; fetchLogs() } }
+function refresh(){ fetchLogs() }
+function applyFilter(){ filter = document.getElementById('filter').value; fetchLogs() }
+// trigger filter on Enter key
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('filter').addEventListener('keyup', (e) => { if (e.key === 'Enter') applyFilter() })
+  // auto-refresh handler
+  const auto = document.getElementById('autorefresh')
+  function schedule(){ if (timer) clearInterval(timer); if (auto.checked) timer = setInterval(fetchLogs, 5000) }
+  auto.addEventListener('change', schedule)
+  schedule()
+  fetchLogs()
+})
 </script>
 </body>
 </html>`
@@ -57,9 +88,18 @@ fetchLogs();setInterval(fetchLogs,15000)
 				minutes = n
 			}
 		}
+
+		q := strings.TrimSpace(r.URL.Query().Get("q"))
+		ql := strings.ToLower(q)
+
 		lines := logger.Recent(minutes)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		for _, l := range lines {
+			if q != "" {
+				if !strings.Contains(strings.ToLower(l), ql) {
+					continue
+				}
+			}
 			fmt.Fprintln(w, l)
 		}
 	})
