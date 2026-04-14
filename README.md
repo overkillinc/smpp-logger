@@ -93,6 +93,8 @@ nc -zv <node-ip-or-hostname> 30075
 timeout 2 bash -c "</dev/tcp/<node-ip-or-hostname>/30075" && echo OK || echo FAIL
 ```
 
+Warning: the built-in HTTP UI listens on port 8080 by default and uses basic auth with default credentials (admin/admin). This HTTP endpoint is NOT encrypted — do not expose it on untrusted networks. If the logs contain sensitive information, enable TLS (HTTPS) and stronger authentication before use, and replace the default username/password immediately.
+
 Integration tests (example): the repository includes integration tests that can exercise the live k3s-deployed service. A smoke test is provided in `integration/k8s_integration_test.go` that performs a TCP connect to the NodePort and verifies the socket accepts data. Set the target host for tests and run the tests as normal (example):
 
 ```bash

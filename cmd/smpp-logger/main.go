@@ -26,10 +26,24 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// start http UI
+	httpSrv := &http.Server{Addr: cfg.UIAddr, Handler: ui.NewHandler(logger, cfg.UIUser, cfg.UIPass)}
+	go func() {
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Fprintln(os.Stderr, "http server: ", err)
+		}
+	}()
+
 	srv := server.New(cfg, logger)
 	if err := srv.ListenAndServe(ctx); err != nil {
+		// ensure http server stops
+		_ = httpSrv.Shutdown(context.Background())
 		fatal(err)
 	}
+
+	// shutdown http server gracefully
+t_ := context.Background()
+_ = httpSrv.Shutdown(t_)
 }
 
 func fatal(err error) {

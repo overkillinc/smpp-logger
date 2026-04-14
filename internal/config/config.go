@@ -14,6 +14,11 @@ const (
 	defaultPassword        = "smpp-logger"
 	defaultLogFormat       = "text"
 	defaultShutdownTimeout = 10 * time.Second
+
+	// HTTP UI defaults
+	defaultUIAddr  = ":8080"
+	defaultUIUser  = "admin"
+	defaultUIPass  = "admin"
 )
 
 type Config struct {
@@ -22,6 +27,11 @@ type Config struct {
 	Password        string
 	LogFormat       string
 	ShutdownTimeout time.Duration
+
+	// UI settings
+	UIAddr string
+	UIUser string
+	UIPass string
 }
 
 func Load() (Config, error) {
@@ -55,6 +65,23 @@ func LoadFromEnv(lookup func(string) (string, bool)) (Config, error) {
 			return Config{}, fmt.Errorf("parse SMPP_LOGGER_SHUTDOWN_TIMEOUT: %w", err)
 		}
 		cfg.ShutdownTimeout = timeout
+	}
+
+	// UI settings
+	if value, ok := lookup("SMPP_LOGGER_UI_ADDR"); ok {
+		cfg.UIAddr = strings.TrimSpace(value)
+	} else {
+		cfg.UIAddr = defaultUIAddr
+	}
+	if value, ok := lookup("SMPP_LOGGER_UI_USER"); ok {
+		cfg.UIUser = strings.TrimSpace(value)
+	} else {
+		cfg.UIUser = defaultUIUser
+	}
+	if value, ok := lookup("SMPP_LOGGER_UI_PASS"); ok {
+		cfg.UIPass = strings.TrimSpace(value)
+	} else {
+		cfg.UIPass = defaultUIPass
 	}
 
 	if err := cfg.Validate(); err != nil {
