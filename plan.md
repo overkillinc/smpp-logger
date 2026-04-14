@@ -33,3 +33,7 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Confirmed staging ingress now routes to the smpp-logger service in smpp-logger-staging and serves the UI (401 when unauthenticated).
 - Verified original host responds and accepts basic auth.
 
+
+# Security: rotated production UI credentials
+- Rotated UI user credentials for production (k8s secret: smpp-logger-ui-credentials in namespace smpp-logger).
+- New credentials stored temporarily on host at /tmp/smpp-logger-ui-password.txt (permissions 660). Rotate into a secure secret manager ASAP and remove the temp file.
