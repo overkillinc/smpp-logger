@@ -73,12 +73,7 @@ kubectl -n smpp-logger create secret generic smpp-logger-ui-credentials \
   --from-literal=SMPP_LOGGER_UI_PASS=<PASS>
 ```
 
-If your environment requires authenticated pulls from GHCR, create an image pull secret and reference it in the Deployment:
-
-```bash
-kubectl -n smpp-logger create secret docker-registry ghcr-creds \
-  --docker-server=ghcr.io --docker-username=<USER> --docker-password=<PAT> --docker-email=<EMAIL>
-```
+Images are public on GHCR; no image pull secret is required.
 
 Apply the single-file manifest after replacing values or creating secrets as appropriate.
 
