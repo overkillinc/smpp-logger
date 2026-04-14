@@ -37,3 +37,7 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 # Security: rotated production UI credentials
 - Rotated UI user credentials for production (k8s secret: smpp-logger-ui-credentials in namespace smpp-logger).
 - New credentials stored temporarily on host at /tmp/smpp-logger-ui-password.txt (permissions 660). Rotate into a secure secret manager ASAP and remove the temp file.
+
+# Credentials rotated
+- SMPP credentials changed to system-id 'manzana' and a new 16-hex password (rotated).
+- UI credentials changed to user 'smpp-logger' and a new 16-hex password (rotated); temporary copy stored at /tmp/smpp-logger-ui-password.txt and in k8s secret smpp-logger-ui-credentials.
