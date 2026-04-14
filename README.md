@@ -102,6 +102,25 @@ export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
 go test ./... -run Integration -v
 ```
 
+## Kubernetes: apply from GitHub and run integration tests
+
+Apply the example manifest directly from the GitHub raw URL and run the included integration tests against the NodePort exposed by the example manifest.
+
+Example:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/deployment.yaml
+kubectl -n smpp-logger rollout status deployment/smpp-logger --timeout=120s
+# create image pull secret if GHCR is private:
+kubectl -n smpp-logger create secret docker-registry ghcr-creds --docker-server=ghcr.io --docker-username=<GH_USER> --docker-password=<PERSONAL_ACCESS_TOKEN> -o yaml | kubectl apply -f -
+
+# run integration tests targeting the NodePort (replace <node-ip> appropriately):
+export SMPP_TEST_TARGET_HOST=<node-ip-or-hostname>:30075
+go test ./integration -v
+```
+
+Note: if GHCR images are not public, either create `ghcr-creds` as shown above or build and load the image into your k3s cluster locally (e.g., `docker build` + `ctr images import` / `k3s ctr images import`).
+
 ## Release flow
 
 Push a semantic version tag such as `v1.0.0` to trigger:
