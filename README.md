@@ -55,6 +55,14 @@ kubectl -n smpp-logger create secret generic smpp-logger-auth \
 
 Apply the example manifest once you have created the necessary secrets and (if required) an image pull secret for GHCR.
 
+For a one-line deploy (quick testing), use the single-file manifest hosted in this repository:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/overkillinc/smpp-logger/main/examples/kubernetes/smpp-logger-deploy.yaml
+```
+
+The single-file manifest contains dummy credentials and a placeholder domain — replace those values, or create Kubernetes secrets separately, before exposing to public networks.
+
 
 ## HTTP UI
 
