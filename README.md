@@ -121,6 +121,12 @@ go test ./integration -v
 
 Note: if GHCR images are not public, either create `ghcr-creds` as shown above or build and load the image into your k3s cluster locally (e.g., `docker build` + `ctr images import` / `k3s ctr images import`).
 
+## Ingress and HTTP UI
+
+If you've applied the example ingress and cert-manager is active, the service will be available at `https://smpp-logger.de.it-union.net` (DNS must point to the cluster node). The example uses Traefik + cert-manager (HTTP-01) and will automatically request a TLS certificate. Access the UI with the default credentials `admin` / `admin`.
+
+If the built container image with the UI is not yet deployed, a temporary HTTP backend may be used by the cluster to satisfy the ingress and TLS; replace it by deploying the image that contains the UI and ensure the pod listens on port `8080`.
+
 ## Release flow
 
 Push a semantic version tag such as `v1.0.0` to trigger:
