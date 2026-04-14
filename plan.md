@@ -54,3 +54,5 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Integration tests now require RUN_INTEGRATION=true to run against localhost, or SMPP_TEST_TARGET_HOST to point at a remote target. This prevents CI from skipping real local failures while avoiding CI breaks when staging is unavailable.
 
 - Added .github/workflows/ghcr-cleanup.yml manual workflow to list and delete GHCR container package versions (dry-run default). Run via Actions -> GHCR cleanup and set dry_run=false to perform deletes.
+
+- Production redeployed to ghcr.io/overkillinc/smpp-logger:staging and verified UI filter present (input#filter + server-side q param). Verified via port-forward and basic auth credentials from k8s secret.
