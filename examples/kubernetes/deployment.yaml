@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
         - name: smpp-logger
-          image: ghcr.io/overkillinc/smpp-logger:latest
+          image: ghcr.io/overkillinc/smpp-logger:v1.0.10
           ports:
             - containerPort: 2775
               name: smpp
