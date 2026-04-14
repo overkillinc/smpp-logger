@@ -60,3 +60,15 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Added docker-compose.yml and Makefile for quick local testing and developer convenience.
   - docker-compose provides out-of-box run with dummy credentials (testing only).
   - Makefile includes run, docker-build, docker-run, compose-up/down, test, fmt, tidy targets.
+
+Final polish and next steps:
+- Repository prepared for open-source: LICENSE (MIT), CONTRIBUTING.md, CODE_OF_CONDUCT.md, sanitized examples, improved README, docker-compose and Makefile, CI workflows including a manual GHCR cleanup action.
+- Production credentials were not changed and remain in k8s as requested.
+- Recommendations:
+  - Add a promotion workflow to tag and release images from staging to production (automated image promotion).
+  - Configure CI to run integration tests only for staging jobs (set SMPP_TEST_TARGET_HOST) and keep unit tests in PRs.
+  - Schedule periodic GHCR cleanup (enable ghcr-cleanup workflow with dry_run=false and narrow patterns).
+  - Add vulnerability scanning (e.g., GitHub Advanced Security, trivy in CI).
+  - Optionally add a release script/Makefile target to promote staging -> prod and create annotated release tags.
+
+If you want, implement any of the recommendations now (release promotion, scheduled cleanup, trivy scan).
