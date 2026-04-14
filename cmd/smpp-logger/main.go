@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,6 +11,7 @@ import (
 	"github.com/overkillinc/smpp-logger/internal/config"
 	"github.com/overkillinc/smpp-logger/internal/logging"
 	"github.com/overkillinc/smpp-logger/internal/server"
+	"github.com/overkillinc/smpp-logger/internal/ui"
 )
 
 func main() {

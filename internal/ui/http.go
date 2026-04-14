@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/overkillinc/smpp-logger/internal/logging"
 )

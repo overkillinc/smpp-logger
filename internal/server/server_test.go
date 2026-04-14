@@ -96,8 +96,8 @@ func TestServerSubmitFlowLogsAndReceipt(t *testing.T) {
 		t.Fatalf("response ID = %v, want unbind_resp", unbindResp.Header().ID)
 	}
 
-	output := logs.String()
-	for _, want := range []string{
+	// logs may be written asynchronously; retry briefly to avoid flaky failures
+	wanted := []string{
 		`event=bind`,
 		`event=submit`,
 		`event=receipt`,
@@ -107,10 +107,26 @@ func TestServerSubmitFlowLogsAndReceipt(t *testing.T) {
 		`destination="15551234567"`,
 		`text="hello world"`,
 		`message_id="` + messageID + `"`,
-	} {
-		if !strings.Contains(output, want) {
-			t.Fatalf("log output missing %q: %s", want, output)
+	}
+	var output string
+	foundAll := false
+	for i := 0; i < 50; i++ { // up to ~500ms
+		output = logs.String()
+		missing := false
+		for _, want := range wanted {
+			if !strings.Contains(output, want) {
+				missing = true
+				break
+			}
 		}
+		if !missing {
+			foundAll = true
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !foundAll {
+		t.Fatalf("log output missing items after wait: %s", output)
 	}
 }
 
