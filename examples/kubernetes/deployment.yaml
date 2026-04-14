@@ -54,9 +54,15 @@ spec:
             - name: SMPP_LOGGER_UI_ADDR
               value: :8080
             - name: SMPP_LOGGER_UI_USER
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-ui-credentials
+                  key: SMPP_LOGGER_UI_USER
             - name: SMPP_LOGGER_UI_PASS
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: smpp-logger-ui-credentials
+                  key: SMPP_LOGGER_UI_PASS
           readinessProbe:
             tcpSocket:
               port: smpp
