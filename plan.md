@@ -41,3 +41,8 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 # Credentials rotated
 - SMPP credentials changed to system-id 'manzana' and a new 16-hex password (rotated).
 - UI credentials changed to user 'smpp-logger' and a new 16-hex password (rotated); temporary copy stored at /tmp/smpp-logger-ui-password.txt and in k8s secret smpp-logger-ui-credentials.
+
+# Testing notes (staging)
+- Integration tests were executed against the staging namespace using a local port-forward to svc/smpp-logger (127.0.0.1:50076 -> 2775).
+- Tests passed: TestIntegration_SmppFlow succeeded when run against staging.
+- Policy: All integration tests touching prod must use only published GHCR images; staging is the default environment for live testing.
