@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  smpp-logger:
+    image: ghcr.io/overkillinc/smpp-logger:latest
+    ports:
+      - "2775:2775"
+      - "8080:8080"
+    environment:
+      - SMPP_LOGGER_SYSTEM_ID=smpp-logger
+      - SMPP_LOGGER_PASSWORD=smpp-logger
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL","nc -z localhost 2775 || exit 1"]
+      interval: 10s
+      timeout: 2s
+      retries: 3

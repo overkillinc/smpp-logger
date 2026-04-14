@@ -56,3 +56,7 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Added .github/workflows/ghcr-cleanup.yml manual workflow to list and delete GHCR container package versions (dry-run default). Run via Actions -> GHCR cleanup and set dry_run=false to perform deletes.
 
 - Production redeployed to ghcr.io/overkillinc/smpp-logger:staging and verified UI filter present (input#filter + server-side q param). Verified via port-forward and basic auth credentials from k8s secret.
+
+- Added docker-compose.yml and Makefile for quick local testing and developer convenience.
+  - docker-compose provides out-of-box run with dummy credentials (testing only).
+  - Makefile includes run, docker-build, docker-run, compose-up/down, test, fmt, tidy targets.
