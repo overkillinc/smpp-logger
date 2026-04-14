@@ -21,3 +21,9 @@ The mission is to provide a docker image to host in k8s as a simple way to debug
 - Duplicated deployment and service into the staging namespace and created an ingress at smpp-logger-staging.de.it-union.net for testing.
 - Collected staging UI root at /tmp/ui_root_staging.html and /tmp/ui_logs_staging.txt for debugging.
 
+
+# Staging routing fix
+- Created ClusterIP service 'smpp-logger' in smpp-logger-staging to back the ingress (selector app=smpp-logger).
+- Verified endpoints and performed in-cluster curl to service; tested node-level Host-header curl before and after service creation.
+- Patched ingress to set spec.ingressClassName: traefik to ensure Traefik picks up routes if needed.
+
